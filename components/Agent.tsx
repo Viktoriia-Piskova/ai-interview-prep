@@ -1,6 +1,10 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/router";
+import { vapi } from "@/lib/vapi.sdk";
 
 enum CallStatus {
   INACTIVE = "INACTIVE",
@@ -9,14 +13,55 @@ enum CallStatus {
   FINISHED = "FINISHED",
 }
 
-const Agent = ({ userName, type }: AgentProps) => {
-  const isSpeaking = true;
-  const callStatus = CallStatus.INACTIVE;
+interface SavedMessage {
+  role: "user" | "system" | "assistant";
+  content: string;
+}
 
-  const messages = [
-    "What's your name?",
-    "My name is John Doe, nise to meet you",
-  ];
+const Agent = ({ userName, userId, type }: AgentProps) => {
+  //const isSpeaking = true;
+  //const callStatus = CallStatus.INACTIVE;
+  const router = useRouter();
+
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [callStatus, setCallStatus] = useState<CallStatus>();
+  const [messages, setMessages] = useState<SavedMessage[]>([]);
+
+  useEffect(() => {
+    const onCallStart = () => setCallStatus(CallStatus.ACTIVE);
+    const onCallEnd = () => setCallStatus(CallStatus.FINISHED);
+    const onMessage = (message: Message) => {
+      if (message.type === "transcript" && message.transcriptType === "final") {
+        const newMessage = { role: message.role, content: message.transcript };
+        setMessages((prev) => [...prev, newMessage]);
+      }
+    };
+
+    const onSpeechStart = () => setIsSpeaking(true);
+    const onSpeechEnd = () => setIsSpeaking(false);
+    const onError = (error: Error) => console.log(error);
+
+    vapi.on("call-start", onCallStart);
+    vapi.on("call-end", onCallEnd);
+    vapi.on("message", onMessage);
+    vapi.on("speech-start", onSpeechStart);
+    vapi.on("speech-end", onSpeechEnd);
+    vapi.on("error", onError);
+
+    return () => {
+      vapi.off("call-start", onCallStart);
+      vapi.off("call-end", onCallEnd);
+      vapi.off("message", onMessage);
+      vapi.off("speech-start", onSpeechStart);
+      vapi.off("speech-end", onSpeechEnd);
+      vapi.off("error", onError);
+    };
+  }, []);
+
+  // const messages = [
+  //   "What's your name?",
+  //   "My name is John Doe, nise to meet you",
+  // ];
 
   const lastMessage = messages[messages.length - 1];
 
