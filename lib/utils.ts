@@ -23,22 +23,24 @@ const checkIconExists = async (url: string) => {
 };
 
 export const getTechLogos = async (techArray: string[]) => {
-  const logoURLs = techArray.map((tech) => {
-    const normalized = normalizeTechName(tech);
-    return {
-      tech,
-      url: `${techIconBaseURL}/${normalized}/${normalized}-original.svg`,
-    };
-  });
+  if (techArray && techArray.length > 0) {
+    const logoURLs = techArray.map((tech) => {
+      const normalized = normalizeTechName(tech);
+      return {
+        tech,
+        url: `${techIconBaseURL}/${normalized}/${normalized}-original.svg`,
+      };
+    });
 
-  const results = await Promise.all(
-    logoURLs.map(async ({ tech, url }) => ({
-      tech,
-      url: (await checkIconExists(url)) ? url : "/tech.svg",
-    }))
-  );
+    const results = await Promise.all(
+      logoURLs.map(async ({ tech, url }) => ({
+        tech,
+        url: (await checkIconExists(url)) ? url : "/tech.svg",
+      }))
+    );
 
-  return results;
+    return results;
+  }
 };
 
 export const getRandomInterviewCover = () => {
