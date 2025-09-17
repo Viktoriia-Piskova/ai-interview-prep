@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { vapi } from "@/lib/vapi.sdk";
 
 enum CallStatus {
@@ -19,12 +19,11 @@ interface SavedMessage {
 }
 
 const Agent = ({ userName, userId, type }: AgentProps) => {
-  //const isSpeaking = true;
-  //const callStatus = CallStatus.INACTIVE;
+
   const router = useRouter();
 
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [callStatus, setCallStatus] = useState<CallStatus>();
+  const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [messages, setMessages] = useState<SavedMessage[]>([]);
 
   useEffect(() => {
@@ -58,12 +57,29 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
     };
   }, []);
 
-  // const messages = [
-  //   "What's your name?",
-  //   "My name is John Doe, nise to meet you",
-  // ];
+  useEffect(() => {
+    if (callStatus === CallStatus.FINISHED) router.push("/");
+  }, [messages, callStatus, type, userId]);
 
-  const lastMessage = messages[messages.length - 1];
+  const handleCall = async () => {
+    setCallStatus(CallStatus.CONNECTING);
+    await vapi.start('d6c76a18-12ae-43cf-a5f5-370fdd4756e8', {
+      variableValues: {
+        username: userName,
+        userid: userId,
+      },
+    });
+  };
+
+  const handleDisconnect = async () => {
+    setCallStatus(CallStatus.FINISHED);
+    vapi.stop();
+  };
+
+  const latestMessage = messages[messages.length - 1]?.content;
+
+  const isCallInactiveOrFinished =
+    callStatus === CallStatus.INACTIVE || callStatus === CallStatus.FINISHED;
 
   return (
     <>
@@ -103,16 +119,16 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
                 "transition-opacity duration-500 opacity-0",
                 "animate-fadeIn opacity-100"
               )}
-              key={lastMessage}
+              key={latestMessage}
             >
-              {lastMessage}
+              {latestMessage}
             </p>
           </div>
         </div>
       )}
       <div className="w-full flex justify-center">
-        {callStatus === "INACTIVE" ? (
-          <button className="relative btn-call">
+        {callStatus !== "ACTIVE" ? (
+          <button className="relative btn-call" onClick={handleCall}>
             <span
               className={cn(
                 "absolute animate-ping rounded-full opacity-75",
@@ -120,14 +136,13 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
               )}
             />
             <span>
-              {" "}
-              {callStatus === "INACTIVE" || callStatus === "FINISHED"
+              {isCallInactiveOrFinished
                 ? "Call"
                 : "..."}
             </span>
           </button>
         ) : (
-          <button className="btn-disconnect">End</button>
+          <button onClick={handleDisconnect} className="btn-disconnect">End</button>
         )}
       </div>
     </>
