@@ -4,11 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { use } from "react";
 import InterviewCard from "@/components/InterviewCard";
+import { getCurrentUser } from "@/lib/actions/auth.action";
 import {
-  getCurrentUser,
-  getInterviewsByUserId,
   getLatestInterviews,
-} from "@/lib/actions/auth.action";
+  getInterviewsByUserId,
+} from "@/lib/actions/general.action";
+
 
 const Page = async () => {
   const user = await getCurrentUser();
