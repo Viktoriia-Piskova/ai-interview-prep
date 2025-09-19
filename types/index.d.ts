@@ -97,3 +97,9 @@ interface InterviewFormProps {
 interface TechIconProps {
   techStack: string[];
 }
+
+interface FeedbackCategoryDetails {
+  name: string;
+  comment: string;
+  score: number;
+}
