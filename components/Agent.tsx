@@ -19,7 +19,6 @@ interface SavedMessage {
 }
 
 const Agent = ({ userName, userId, type }: AgentProps) => {
-
   const router = useRouter();
 
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -63,12 +62,13 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
 
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
-    await vapi.start('d6c76a18-12ae-43cf-a5f5-370fdd4756e8', {
-      variableValues: {
-        username: userName,
-        userid: userId,
-      },
-    });
+    await vapi.start(
+      undefined, // assistant
+      undefined, // assistantOverrides
+      undefined, // squad
+      process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID, // workflow
+      { variableValues: { username: userName, userid: userId } }
+    );
   };
 
   const handleDisconnect = async () => {
@@ -135,14 +135,12 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
                 callStatus !== "CONNECTING" && "hidden"
               )}
             />
-            <span>
-              {isCallInactiveOrFinished
-                ? "Call"
-                : "..."}
-            </span>
+            <span>{isCallInactiveOrFinished ? "Call" : "..."}</span>
           </button>
         ) : (
-          <button onClick={handleDisconnect} className="btn-disconnect">End</button>
+          <button onClick={handleDisconnect} className="btn-disconnect">
+            End
+          </button>
         )}
       </div>
     </>
